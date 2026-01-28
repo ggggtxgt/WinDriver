@@ -4,50 +4,62 @@ void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-void MemoryAlloc() {
+// LIST_ENTRY 结构体详解：
+/*
+typedef struct _LIST_ENTRY {
+	struct _LIST_ENTRY* Flink;  // 后向指针
+	struct _LIST_ENTRY* Blink;  // 前向指针
+} LIST_ENTRY, * PLIST_ENTRY;
+*/
+
+// 创建自定义结构体
+typedef struct _LIST {
+	ULONG m_dataA;			// 数据 A
+	ULONG m_dataB;			// 数据 B
+	LIST_ENTRY m_ListEntry;	// LIST_ENTRY 变量
+	ULONG m_dataC;			// 数据 C（注意偏移）
+} LIST, *PLIST;
+
+void UseListEntry() {
+	PLIST_ENTRY header = ExAllocatePool(NonPagedPool, sizeof(PLIST_ENTRY));
+	LIST node01 = { 0 };
+	LIST node02 = { 0 };
+	LIST node03 = { 0 };
+	LIST node04 = { 0 };
+	node01.m_dataA = 0x123;
+	node02.m_dataA = 0x234;
+	node03.m_dataA = 0x345;
+	node04.m_dataA = 0x456;
 	// -----------------------------------------------------------------------------------------------------------
-	// 方法1：使用 ExAllocatePool 进行分配；
-	PCHAR pwstr01 = ExAllocatePool(NonPagedPool, 0x100);
-	if (pwstr01) {
-		RtlZeroMemory(pwstr01, 0x100);						// 初始化内存
-		RtlCopyMemory(pwstr01, L"ExAllocatePool!!!", 34);	// 为该内存赋值
-		UNICODE_STRING ustr01 = { 0 };
-		RtlInitUnicodeString(&ustr01, pwstr01);				// 以申请的内存为 UNICODE_STRING 赋值
-		DbgPrint("%wZ", &ustr01);							// 直接输出 UNICODE_STRING 之中 Buffer
-		ExFreePool(pwstr01);								// 释放申请的内存
-	}
-	// -----------------------------------------------------------------------------------------------------------
-	// 方法2：使用 ExAllocatePoolWithTag 进行分配；
-	PWCHAR pwstr02 = ExAllocatePoolWithTag(NonPagedPool, 0x100, "ExAllocatePoolWithTag");
-	if (pwstr02) {
-		RtlZeroMemory(pwstr02, 0x100);
-		RtlCopyMemory(pwstr02, L"ExAllocatePoolWithTag!!!", 48);
-		UNICODE_STRING ustr02 = { 0 };
-		RtlInitUnicodeString(&ustr02, pwstr02);
-		DbgPrint("%wZ", &ustr02);
-		ExFreePoolWithTag(pwstr02, "ExFreePoolWithTag");
-	}
-	// -----------------------------------------------------------------------------------------------------------
-	// 方法3：使用旁视列表进行内存分配；
-	PNPAGED_LOOKASIDE_LIST pNpList = ExAllocatePool(NonPagedPool, sizeof(NPAGED_LOOKASIDE_LIST));
-	if (pNpList) {
-		ExInitializeNPagedLookasideList(pNpList, NULL, NULL, 0, 0x100, '100', 0);
-		PWCHAR pwstr03 = ExAllocateFromNPagedLookasideList(pNpList);
-		if (pwstr03) {
-			RtlZeroMemory(pwstr03, 0x100);
-			RtlCopyMemory(pwstr03, L"ExAllocateFromNPagedLookasideList!!!", 74);
-			UNICODE_STRING ustr03 = { 0 };
-			RtlInitUnicodeString(&ustr03, pwstr03);
-			DbgPrint("%wZ", &ustr03);
-			ExFreeToNPagedLookasideList(pNpList, pwstr03);	// 释放旁视列表申请的内存空间
-			ExDeleteNPagedLookasideList(pNpList);			// 释放旁视列表对象
+	// 遍历链表；
+	if (header) {
+		RtlZeroMemory(header, sizeof(LIST_ENTRY));
+		InitializeListHead(header);						// 初始化 LIST_ENTRY，使其头尾结点相同
+		InsertHeadList(header, &node01.m_ListEntry);	// 从头部插入结点
+		InsertHeadList(header, &node02.m_ListEntry);	// 从头部插入结点
+		InsertHeadList(header, &node03.m_ListEntry);	// 从头部插入结点
+		InsertHeadList(header, &node04.m_ListEntry);	// 从头部插入结点
+		PLIST_ENTRY curNode = NULL;
+		curNode = header->Flink;
+		while (curNode != header) {
+			PLIST addr = CONTAINING_RECORD(curNode, LIST, m_ListEntry);	// 获取当前结点首地址
+			DbgPrint("%x\n", addr->m_dataA);
+			curNode = curNode->Flink;
 		}
+		ExFreePool(header);
 	}
+	// -----------------------------------------------------------------------------------------------------------
+	// 移除链表元素；
+	/*
+	RemoveHeadList();		// 移除头结点，成功之后，将会返回移除结点地址，用于释放内存
+	RemoveTailList();		// 移除尾结点，成功之后，将会返回移除结点地址，用于释放内存
+	RemoveEntryList();		// 移除指定结点，成功之后返回移除结点地址，用于释放内存
+	*/
 	// -----------------------------------------------------------------------------------------------------------
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	MemoryAlloc();
+	UseListEntry();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }

@@ -8,4 +8,5 @@
 - [001第一个驱动程序 -- 飞书云文档](https://my.feishu.cn/docx/PjxpdUpmmoTNOqxEZAUcjrrUnMM)
 - [002使用 UNICODE_STRING -- 飞书云文档](https://my.feishu.cn/docx/KLOQdPnRboOqtUxox6ncLF9Hnfe)
 - [003内核层内存分配 -- 飞书云文档](https://my.feishu.cn/docx/YqlJdNYYboWmlTxLsyvcElghnjc)
+- [004链表 LIST_ENTRY -- 飞书云文档](https://my.feishu.cn/docx/Uj8DdCcutoBXzExq3Peclq9Inqe)
 ## DriverRW
