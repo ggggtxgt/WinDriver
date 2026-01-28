@@ -9,4 +9,5 @@
 - [002使用 UNICODE_STRING -- 飞书云文档](https://my.feishu.cn/docx/KLOQdPnRboOqtUxox6ncLF9Hnfe)
 - [003内核层内存分配 -- 飞书云文档](https://my.feishu.cn/docx/YqlJdNYYboWmlTxLsyvcElghnjc)
 - [004链表 LIST_ENTRY -- 飞书云文档](https://my.feishu.cn/docx/Uj8DdCcutoBXzExq3Peclq9Inqe)
+- [005二叉查找树 -- 飞书云文档](https://my.feishu.cn/docx/N6gnd0HQeo6RdkxdXPfcgZmYnLh)
 ## DriverRW

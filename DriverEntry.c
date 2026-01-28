@@ -4,62 +4,94 @@ void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-// LIST_ENTRY 结构体详解：
-/*
-typedef struct _LIST_ENTRY {
-	struct _LIST_ENTRY* Flink;  // 后向指针
-	struct _LIST_ENTRY* Blink;  // 前向指针
-} LIST_ENTRY, * PLIST_ENTRY;
-*/
-
 // 创建自定义结构体
-typedef struct _LIST {
-	ULONG m_dataA;			// 数据 A
-	ULONG m_dataB;			// 数据 B
-	LIST_ENTRY m_ListEntry;	// LIST_ENTRY 变量
-	ULONG m_dataC;			// 数据 C（注意偏移）
-} LIST, *PLIST;
+typedef struct _TEST {
+    ULONG a;
+    ULONG b;
+} TEST, * PTEST;
 
-void UseListEntry() {
-	PLIST_ENTRY header = ExAllocatePool(NonPagedPool, sizeof(PLIST_ENTRY));
-	LIST node01 = { 0 };
-	LIST node02 = { 0 };
-	LIST node03 = { 0 };
-	LIST node04 = { 0 };
-	node01.m_dataA = 0x123;
-	node02.m_dataA = 0x234;
-	node03.m_dataA = 0x345;
-	node04.m_dataA = 0x456;
-	// -----------------------------------------------------------------------------------------------------------
-	// 遍历链表；
-	if (header) {
-		RtlZeroMemory(header, sizeof(LIST_ENTRY));
-		InitializeListHead(header);						// 初始化 LIST_ENTRY，使其头尾结点相同
-		InsertHeadList(header, &node01.m_ListEntry);	// 从头部插入结点
-		InsertHeadList(header, &node02.m_ListEntry);	// 从头部插入结点
-		InsertHeadList(header, &node03.m_ListEntry);	// 从头部插入结点
-		InsertHeadList(header, &node04.m_ListEntry);	// 从头部插入结点
-		PLIST_ENTRY curNode = NULL;
-		curNode = header->Flink;
-		while (curNode != header) {
-			PLIST addr = CONTAINING_RECORD(curNode, LIST, m_ListEntry);	// 获取当前结点首地址
-			DbgPrint("%x\n", addr->m_dataA);
-			curNode = curNode->Flink;
-		}
-		ExFreePool(header);
-	}
-	// -----------------------------------------------------------------------------------------------------------
-	// 移除链表元素；
-	/*
-	RemoveHeadList();		// 移除头结点，成功之后，将会返回移除结点地址，用于释放内存
-	RemoveTailList();		// 移除尾结点，成功之后，将会返回移除结点地址，用于释放内存
-	RemoveEntryList();		// 移除指定结点，成功之后返回移除结点地址，用于释放内存
-	*/
-	// -----------------------------------------------------------------------------------------------------------
+// 自定义比较函数：
+RTL_GENERIC_COMPARE_RESULTS NTAPI RtlCmp(__in struct _RTL_GENERIC_TABLE* Table, __in PVOID FirstStruct, __in PVOID SecondStruct) {
+    DbgPrint("RtlCmp");
+    PTEST first = FirstStruct;
+    PTEST second = SecondStruct;
+    if (first->a == second->a) {
+        return GenericEqual;
+    } else if (first->a > second->a) {
+        return GenericGreaterThan;
+    }
+    return GenericLessThan;
+}
+
+// 自定义内存申请函数：
+PVOID RtlAlloc(__in struct _RTL_GENERIC_TABLE* Table, __in CLONG ByteSize) {
+    DbgPrint("RtlAlloc");
+    ExAllocatePool(NonPagedPool, ByteSize);
+}
+
+// 自定义内存释放函数：
+VOID RtlFree(__in struct _RTL_GENERIC_TABLE* Table, __in PVOID Buffer) {
+    DbgPrint("RtlFree");
+    ExFreePool(Buffer);
+}
+
+void UseGenericTable() {
+    RTL_GENERIC_TABLE root = { 0 };
+    TEST test01 = { 1, 2 };
+    TEST test02 = { 2, 3 };
+    TEST test03 = { 3, 4 };
+    TEST test04 = { 4, 5 };
+    BOOLEAN insertResult = FALSE;
+    // 初始化二叉查找树结构，需要指定比较、内存申请、内存释放函数
+    RtlInitializeGenericTable(&root, RtlCmp, RtlAlloc, RtlFree, NULL);
+    DbgPrint("RtlInitializeGenericTable");
+    // -----------------------------------------------------------------------------------------------------------
+    // 操作一：插入结点；
+    RtlInsertElementGenericTable(&root, &test01, sizeof(TEST), &insertResult);
+    DbgPrint("插入结果: %d", insertResult);
+    RtlInsertElementGenericTable(&root, &test02, sizeof(TEST), &insertResult);
+    DbgPrint("插入结果: %d", insertResult);    
+    RtlInsertElementGenericTable(&root, &test03, sizeof(TEST), &insertResult);
+    DbgPrint("插入结果: %d", insertResult);    
+    RtlInsertElementGenericTable(&root, &test04, sizeof(TEST), &insertResult);
+    DbgPrint("插入结果: %d", insertResult);
+    DbgPrint("------------------------------");
+    // -----------------------------------------------------------------------------------------------------------
+    // 操作二：查询结点个数；
+    ULONG num = RtlNumberGenericTableElements(&root);
+    DbgPrint("二叉搜索树节点个数: %d", num);
+    DbgPrint("------------------------------");
+    // -----------------------------------------------------------------------------------------------------------
+    // 操作三：遍历；
+    // 第一种遍历方法：
+    for (ULONG i = 0; i < num; i++) {
+        PTEST ptest = RtlGetElementGenericTable(&root, i);
+        DbgPrint("方法一遍历结果为: %d", ptest->a);
+    }
+    DbgPrint("------------------------------");
+    // 第二种遍历方法：
+    ULONG RestarKey = 0;
+    PTEST ptr = NULL;
+    for (ptr = RtlEnumerateGenericTableWithoutSplaying(&root, &RestarKey);
+        ptr != NULL;
+        ptr = RtlEnumerateGenericTableWithoutSplaying(&root, &RestarKey)) {
+        DbgPrint("方法二遍历结果为: %d", ptr->a);
+    }
+    // -----------------------------------------------------------------------------------------------------------
+    // 操作四：查找指定结点；
+    PTEST pfind = RtlLookupElementGenericTable(&root, &test03);
+    if (NULL != pfind) {
+        DbgPrint("已找到指定节点!!!");
+    }
+    // -----------------------------------------------------------------------------------------------------------
+    // 其他操作：删除指定节点、判断是否为空；
+    // RtlDeleteElementGenericTable();
+    // RtlIsGenericTableEmpty();
+    // -----------------------------------------------------------------------------------------------------------
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	UseListEntry();
+	UseGenericTable();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }
