@@ -16,4 +16,5 @@
 - [009注册表操作-创建 -- 飞书云文档](https://my.feishu.cn/docx/VzmAdo6p8oUKVexHCW7ctOFPnMb)
 - [010注册表操作-其他 -- 飞书云文档](https://my.feishu.cn/docx/IUV7damtRoQMfoxaXsZcNpBJnDg)
 - [011应用-驱动层通信(一) -- 飞书云文档](https://my.feishu.cn/docx/BIwKd4FLioMaobxDPs7cVfAFn1d)
+- [012应用-驱动层通信(二) -- 飞书云文档](https://my.feishu.cn/docx/Mijadj2JNonMZox8CJycprcqnac)
 ## DriverRW

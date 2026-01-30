@@ -17,6 +17,51 @@ NTSTATUS DispatchCreate(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
     return STATUS_SUCCESS;
 }
 
+// 派遣函数 -- 类似于回调函数
+NTSTATUS DispatchClose(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
+    DbgPrint("IRP_MJ_CLOSE 已经触发!!!");
+    Irp->IoStatus.Status = STATUS_SUCCESS;
+    Irp->IoStatus.Information = 0;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    return STATUS_SUCCESS;
+}
+
+// 派遣函数 -- 类似于回调函数
+NTSTATUS DispatchWrite(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
+    DbgPrint("IRP_MJ_WRITE 已经触发!!!");
+    // R3写入数据，而R0需要从中取出数据
+    // 获取当前IRP栈
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    // 获取缓冲区大小
+    ULONG bufferLen = irpStack->Parameters.Write.Length;
+    // 获取缓冲区地址
+    PVOID buff = Irp->AssociatedIrp.SystemBuffer;
+    if (buff) {
+        DbgPrint("%s", buff);
+    }
+    Irp->IoStatus.Status = STATUS_SUCCESS;
+    Irp->IoStatus.Information = 0;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    return STATUS_SUCCESS;
+}
+
+// 派遣函数 -- 类似于回调函数
+NTSTATUS DispatchRead(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
+    DbgPrint("IRP_MJ_READ 已经触发!!!");
+    // R3写入数据，而R0需要从中取出数据
+    // 获取当前IRP栈
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    // 获取缓冲区地址
+    PVOID buff = Irp->AssociatedIrp.SystemBuffer;
+    if (buff) {
+        memcpy(buff, "Hello Driver", strlen("Hello Driver") + 1);
+    }
+    Irp->IoStatus.Status = STATUS_SUCCESS;
+    Irp->IoStatus.Information = strlen("Hello Driver") + 1;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    return STATUS_SUCCESS;
+}
+
 // 创建设备对象函数详解：
 /*
 NTSTATUS IoCreateDevice(
@@ -49,6 +94,9 @@ void Connection(PDRIVER_OBJECT pDriver) {
     pDevice->Flags |= DO_BUFFERED_IO;
     // 设置派遣函数
     pDriver->MajorFunction[IRP_MJ_CREATE] = DispatchCreate;
+    pDriver->MajorFunction[IRP_MJ_CLOSE] = DispatchClose;
+    pDriver->MajorFunction[IRP_MJ_WRITE] = DispatchWrite;
+    pDriver->MajorFunction[IRP_MJ_READ] = DispatchRead;
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
