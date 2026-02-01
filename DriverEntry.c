@@ -1,5 +1,8 @@
 #include <ntifs.h>
 
+#define MSG_CODE_WRITE CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_IN_DIRECT, FILE_ANY_ACCESS)
+#define MSG_CODE_READ CTL_CODE(FILE_DEVICE_UNKNOWN, 0x802, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)
+
 void DriverUnload(PDRIVER_OBJECT pDriver) {
     // 删除符号连接、设备对象
     UNICODE_STRING deviceSymbolName = RTL_CONSTANT_STRING(L"\\??\\Device02");
@@ -37,6 +40,30 @@ NTSTATUS DispatchRead(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
     return STATUS_SUCCESS;
 }
 
+// 派遣函数 -- 类似于回调函数
+NTSTATUS DispatchDeviceControl(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
+    DbgPrint("IRP_MJ_DEVICE_CONTROL 已经触发!!!");
+    // 使用直接读写方式：R3写入数据，而R0需要从中取出数据
+    // 获取当前IRP栈
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+
+    switch (irpStack->Parameters.DeviceIoControl.IoControlCode) {
+        case MSG_CODE_WRITE:
+            // 直接读写 MDL
+            DbgPrint("%s\n", Irp->AssociatedIrp.SystemBuffer);
+            Irp->IoStatus.Information = 0;
+            break;
+        case MSG_CODE_READ:
+            DbgPrint("%s", MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority));
+            RtlCopyMemory(MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority), "R0返回的数据", strlen("R0返回的数据") + 1);
+            Irp->IoStatus.Information = strlen("R0返回的数据") + 1;
+            break;
+    }
+    Irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    return STATUS_SUCCESS;
+}
+
 void Connection(PDRIVER_OBJECT pDriver) {
     PDEVICE_OBJECT pDevice = NULL;
     // 设备名称
@@ -57,7 +84,7 @@ void Connection(PDRIVER_OBJECT pDriver) {
     // 设置派遣函数 -- 定义不同类型的派遣函数，根据类型进行调用
     pDriver->MajorFunction[IRP_MJ_CREATE] = DispatchCreate;
     pDriver->MajorFunction[IRP_MJ_READ] = DispatchRead;
-
+    pDriver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DispatchDeviceControl;
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
