@@ -21,4 +21,5 @@
 - [014数据交互方式(一) -- 飞书云文档](https://my.feishu.cn/docx/QS9zdrnLgowA82xtfXWcphqenkg)
 - [015数据交互方式(二) -- 飞书云文档](https://my.feishu.cn/docx/TJYudXh9ConM8MxZr7LcibNVn2e)
 - [016API调用过程 -- 飞书云文档](https://my.feishu.cn/docx/IyWZdj7EhoGhCXxNwpGc8LPEnuh)
+- [017快速系统调用 -- 飞书云文档](https://my.feishu.cn/docx/JB7AdhdCUodzj2xV9SkcLL59nZf)
 ## DriverRW
