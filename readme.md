@@ -24,4 +24,5 @@
 - [017快速系统调用 -- 飞书云文档](https://my.feishu.cn/docx/JB7AdhdCUodzj2xV9SkcLL59nZf)
 - [018SSDT解析说明 -- 飞书云文档](https://my.feishu.cn/docx/AzzndRjMDojvRvxTUIucVFhBnOe)
 - [019SSDT HOOK -- 飞书云文档](https://my.feishu.cn/docx/DEwhdgEm9oTnmfxFxIRcwoW0n6d)
+- [020解析ntdll导出表 -- 飞书云文档](https://my.feishu.cn/docx/LNIddvy9yomzG9xFFptc7nRFnCh)
 ## DriverRW
