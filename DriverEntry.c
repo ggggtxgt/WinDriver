@@ -1,94 +1,60 @@
 #include <ntifs.h>
 
-#define MSG_CODE_WRITE CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_IN_DIRECT, FILE_ANY_ACCESS)
-#define MSG_CODE_READ CTL_CODE(FILE_DEVICE_UNKNOWN, 0x802, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)
+// 全局变量：用于保存 SSDT 函数表的映射地址
+PULONG g_funcTableAddr;
+
+typedef struct _SSDT {
+	PULONG funcAddrTable;	// 系统调用函数地址表
+	PULONG countTable;		// 每个系统调用的参数数量表(可选)
+	ULONG funcNumber;		// 系统调用总数
+	PULONG argTable;		// 参数表(可选)
+} SSDT, *PSSDT;
+// NtClose 函数类型定义
+typedef NTSTATUS(NTAPI *_NtClose)(HANDLE handle);
+// 保存原始的 NtClose 函数指针
+_NtClose OldNtClose = NULL;
+// 声明外部导出的 SSDT 表(仅在x86 Windows 之中有效）
+EXTERN_C PSSDT KeServiceDescriptorTable;
+// ；安装/卸载 Hook 函数声明
+NTSTATUS InstallHook();
+NTSTATUS UninstallHook();
+// Hook 之后的 NtClose 函数
+NTSTATUS NTAPI HookNtClose(HANDLE handle) {
+	DbgPrint("NtClose 已被 Hook!!!");
+	return OldNtClose(handle);
+}
 
 void DriverUnload(PDRIVER_OBJECT pDriver) {
-    // 删除符号连接、设备对象
-    UNICODE_STRING deviceSymbolName = RTL_CONSTANT_STRING(L"\\??\\Device02");
-    IoDeleteSymbolicLink(&deviceSymbolName);
-    IoDeleteDevice(pDriver->DeviceObject);
+	UninstallHook();
 	DbgPrint("DriverUnload!!!");
 }
 
-// 派遣函数 -- 类似于回调函数
-NTSTATUS DispatchCreate(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
-    DbgPrint("IRP_MJ_CREATE 已经触发!!!");
-    Irp->IoStatus.Status = STATUS_SUCCESS;
-    Irp->IoStatus.Information = 0;
-    IoCompleteRequest(Irp, IO_NO_INCREMENT);
-    return STATUS_SUCCESS;
+// 安装 HOOK
+NTSTATUS InstallHook() {
+	// 获取 SSDT 函数表的物理地址
+	PHYSICAL_ADDRESS pyhAddr = MmGetPhysicalAddress(KeServiceDescriptorTable->funcAddrTable);
+	// 将物理地址映射到内核虚拟地址空间
+	g_funcTableAddr = MmMapIoSpace(pyhAddr, PAGE_SIZE, MmNonCached);
+	// 保存原始 NtClose 函数地址(索引0x32对应 NtClose）
+	OldNtClose = g_funcTableAddr[0x32];
+	// 将 SSDT 中的 NtClose 地址替换为 Hool 函数地址
+	g_funcTableAddr[0x32] = (ULONG)HookNtClose;
+	return STATUS_SUCCESS;
 }
 
-// 派遣函数 -- 类似于回调函数
-NTSTATUS DispatchRead(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
-    DbgPrint("IRP_MJ_READ 已经触发!!!");
-    // 使用直接读写方式：R3写入数据，而R0需要从中取出数据
-    // 获取当前IRP栈
-    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
-    // 获取缓冲区大小
-    ULONG bufferLen = MmGetMdlByteCount(Irp->MdlAddress);
-    DbgPrint("缓冲区大小为: %d", bufferLen);
-    // 获取R3缓冲区地址
-    ULONG r3Addr = MmGetMdlVirtualAddress(Irp->MdlAddress);
-    DbgPrint("缓冲区地址为: 0X%08x", r3Addr);
-    PVOID r0Buff = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
-    RtlCopyMemory(r0Buff, "直接读写方式", strlen("直接读写方式") + 1);
-    Irp->IoStatus.Information = strlen("直接读写方式");
-    Irp->IoStatus.Status = STATUS_SUCCESS;
-    IoCompleteRequest(Irp, IO_NO_INCREMENT);
-    return STATUS_SUCCESS;
-}
-
-// 派遣函数 -- 类似于回调函数
-NTSTATUS DispatchDeviceControl(struct _DEVICE_OBJECT* DeviceObject, struct _IRP* Irp) {
-    DbgPrint("IRP_MJ_DEVICE_CONTROL 已经触发!!!");
-    // 使用直接读写方式：R3写入数据，而R0需要从中取出数据
-    // 获取当前IRP栈
-    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
-
-    switch (irpStack->Parameters.DeviceIoControl.IoControlCode) {
-        case MSG_CODE_WRITE:
-            // 直接读写 MDL
-            DbgPrint("%s\n", Irp->AssociatedIrp.SystemBuffer);
-            Irp->IoStatus.Information = 0;
-            break;
-        case MSG_CODE_READ:
-            DbgPrint("%s", MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority));
-            RtlCopyMemory(MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority), "R0返回的数据", strlen("R0返回的数据") + 1);
-            Irp->IoStatus.Information = strlen("R0返回的数据") + 1;
-            break;
-    }
-    Irp->IoStatus.Status = STATUS_SUCCESS;
-    IoCompleteRequest(Irp, IO_NO_INCREMENT);
-    return STATUS_SUCCESS;
-}
-
-void Connection(PDRIVER_OBJECT pDriver) {
-    PDEVICE_OBJECT pDevice = NULL;
-    // 设备名称
-    UNICODE_STRING deviceName = RTL_CONSTANT_STRING(L"\\Device\\Device01");
-    UNICODE_STRING deviceSymbolName = RTL_CONSTANT_STRING(L"\\??\\Device02");
-    // 创建设备对象
-    IoCreateDevice(pDriver, 0, &deviceName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &pDevice);
-    // 创建符号连接
-    NTSTATUS status = IoCreateSymbolicLink(&deviceSymbolName, &deviceName);
-    if (!NT_SUCCESS(status)) {
-        DbgPrint("创建符号连接失败!!!");
-        IoDeleteDevice(pDevice);
-    }
-    // 指定数据交互方式
-    // DO_BUFFERED_IO: 缓冲区读写，将R3缓存区数据复制到R0
-    // DO_DIRECT_IO: 直接读写，R3与R0不同线性地址映射到同一个物理页
-    pDevice->Flags |= DO_DIRECT_IO;
-    // 设置派遣函数 -- 定义不同类型的派遣函数，根据类型进行调用
-    pDriver->MajorFunction[IRP_MJ_CREATE] = DispatchCreate;
-    pDriver->MajorFunction[IRP_MJ_READ] = DispatchRead;
-    pDriver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DispatchDeviceControl;
+// 卸载 HOOK
+NTSTATUS UninstallHook() {
+	// 若保存原始函数指针，则恢复
+	if (OldNtClose) {
+		g_funcTableAddr[0x32] = OldNtClose;
+	}
+	// 解除物理地址映射
+	MmUnmapIoSpace(g_funcTableAddr, PAGE_SIZE);
+	return STATUS_SUCCESS;
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-    Connection(pDriver);
+	InstallHook();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }

@@ -22,5 +22,6 @@
 - [015数据交互方式(二) -- 飞书云文档](https://my.feishu.cn/docx/TJYudXh9ConM8MxZr7LcibNVn2e)
 - [016API调用过程 -- 飞书云文档](https://my.feishu.cn/docx/IyWZdj7EhoGhCXxNwpGc8LPEnuh)
 - [017快速系统调用 -- 飞书云文档](https://my.feishu.cn/docx/JB7AdhdCUodzj2xV9SkcLL59nZf)
-- [018快速系统调用 -- 飞书云文档](https://my.feishu.cn/docx/AzzndRjMDojvRvxTUIucVFhBnOe)
+- [018SSDT解析说明 -- 飞书云文档](https://my.feishu.cn/docx/AzzndRjMDojvRvxTUIucVFhBnOe)
+- [019SSDT HOOK -- 飞书云文档](https://my.feishu.cn/docx/DEwhdgEm9oTnmfxFxIRcwoW0n6d)
 ## DriverRW
