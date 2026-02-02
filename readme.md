@@ -26,4 +26,5 @@
 - [019SSDT HOOK -- 飞书云文档](https://my.feishu.cn/docx/DEwhdgEm9oTnmfxFxIRcwoW0n6d)
 - [020解析ntdll导出表 -- 飞书云文档](https://my.feishu.cn/docx/LNIddvy9yomzG9xFFptc7nRFnCh)
 - [021动态获取调用号 -- 飞书云文档](https://my.feishu.cn/docx/KNDxdWihrotySfxFaRscVOZdnje)
+- [⁠⁠‌‍⁠‍﻿‌‍﻿‍‍‌‍‍‍‍‬‍‌﻿﻿022WOW64进程 -- 飞书云文档](https://my.feishu.cn/docx/LvL7deQmDoDHWQxXzI8cAbaLndb)
 ## DriverRW
