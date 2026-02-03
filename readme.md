@@ -27,4 +27,5 @@
 - [020解析ntdll导出表 -- 飞书云文档](https://my.feishu.cn/docx/LNIddvy9yomzG9xFFptc7nRFnCh)
 - [021动态获取调用号 -- 飞书云文档](https://my.feishu.cn/docx/KNDxdWihrotySfxFaRscVOZdnje)
 - [⁠⁠‌‍⁠‍﻿‌‍﻿‍‍‌‍‍‍‍‬‍‌﻿﻿022WOW64进程 -- 飞书云文档](https://my.feishu.cn/docx/LvL7deQmDoDHWQxXzI8cAbaLndb)
+- [‍‌‍⁠‬‍﻿‌﻿‬‬⁠﻿‍﻿⁠‍⁠⁠‍﻿⁠‬⁠‍‍‍‍‌023进程结构体及保护 -- 飞书云文档](https://my.feishu.cn/docx/K1rzdWrCno8Kz5xTMjDc8YPKngg)
 ## DriverRW
