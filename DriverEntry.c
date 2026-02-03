@@ -1,59 +1,39 @@
 #include <ntifs.h>
 
-typedef struct _LDR_DATA_TABLE_ENTRY {
-	LIST_ENTRY InLoadOrderLinks;
-	LIST_ENTRY InMemoryOrderLinks;
-	LIST_ENTRY InlnitializationOrderLinks;
-	PVOID DIIBase;
-	PVOID EntryPoint;
-	ULONG SizeOflmage;
-	UNICODE_STRING FullDIlName;
-	UNICODE_STRING BaseDllName;
-	ULONG Flags;
-	USHORT LoadCount;
-	USHORT TlsIndex;
-	union {
-		LIST_ENTRY HashLinks;
-		struct {
-			PVOID SectionPointer;
-			ULONG CheckSum;
-		};
-	};
-	union {
-		struct {
-			ULONG TimeDateStamp;
-		};
-		struct {
-			PVOID Loadedlmports;
-		};
-	};
-	struct _ACTIVATION_CONTEXT* EntryPointActivationContext; 
-	PVOID Patchlnformation;
-} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
+UCHAR* PsGetProcessImageFileName(__in PEPROCESS Process);
 
 void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-void Func(PDRIVER_OBJECT pDriver) {
-	PLDR_DATA_TABLE_ENTRY pLdr = (PLDR_DATA_TABLE_ENTRY)pDriver->DriverSection;
-	LIST_ENTRY list = pLdr->InLoadOrderLinks;
-	PLIST_ENTRY pFlink = list.Flink;
-	PLIST_ENTRY pBlink = pFlink->Blink;
-	UNICODE_STRING driverName = { 0 };
-	RtlInitUnicodeString(&driverName, L"Dbgv.sys");
-	while (pFlink != pBlink) {
-		DbgPrint("%Z", (ULONG)pFlink + 0x2c);
-		if (0 == RtlCompareUnicodeString(&driverName, (ULONG)pFlink + 0x2c, TRUE)) {
-			RemoveEntryList(pFlink);
-			break;
+// 枚举进程
+void EnumProcess() {
+	PEPROCESS pEprocess = NULL;
+	// 传入进程ID，将会返回对应的进程对象
+	for (SIZE_T i = 4; i < 20000; i += 4) {
+		NTSTATUS status = PsLookupProcessByProcessId((HANDLE)i, & pEprocess);
+		if (NT_SUCCESS(status)) {
+			DbgPrint("进程名称:%s", PsGetProcessImageFileName(pEprocess));
 		}
-		pFlink = pFlink->Flink;
+	}
+}
+
+// 枚举线程
+void EnumThread() {
+	PETHREAD pEthread = NULL;
+	PEPROCESS pEprocess = NULL;
+	for (SIZE_T i = 4; i < 200000; i += 4) {
+		NTSTATUS status = PsLookupThreadByThreadId((HANDLE)i, &pEthread);
+		if (NT_SUCCESS(status)) {
+			pEprocess = IoThreadToProcess(pEthread);
+			DbgPrint("进程名称:%s, 线程id:%d", PsGetProcessImageFileName(pEprocess), i);
+		}
 	}
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	Func(pDriver);
+	// EnumProcess();
+	EnumThread();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }
