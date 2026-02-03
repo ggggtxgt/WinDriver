@@ -1,20 +1,30 @@
-#include "PeTools.h"
+#include <ntifs.h>
 
 void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	ULONG code = 0;
-	HANDLE handle = 0;
-	char *fileBuffer = PeLoadFile(&handle);
-	ULONG funcAddr = GetFuncAddress(fileBuffer, "NtClose");
-	if (NULL != funcAddr) {
-		GetServiceCode(funcAddr);
+void TraverseProcess() {
+	ULONG processName = 0;
+	// 获取当前进程对象
+	ULONG currentProcess = PsGetCurrentProcess();
+	PLIST_ENTRY processList = (PLIST_ENTRY)(currentProcess + 0xb8);
+	PLIST_ENTRY nextList = processList->Flink;
+	// 遍历链表
+	while (processList != nextList) {
+		ULONG eprocess = ((ULONG)nextList - 0xb8);
+		processName = eprocess + 0x16c;
+		if (0 == strcmp(processName, "123.exexe")) {
+			DbgPrint("已经找到!!!");
+			*(ULONG*)(eprocess + 0x26c) |= 0x800;
+			break;
+		}
+		nextList = nextList->Flink;
 	}
-	DbgPrint("code: %d", code);
-	if (fileBuffer) ExFreePool(fileBuffer);
-	if (handle) ZwClose(handle);
+}
+
+NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
+	TraverseProcess();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }

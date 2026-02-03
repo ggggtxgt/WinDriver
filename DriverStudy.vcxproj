@@ -144,10 +144,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DriverEntry.c" />
-    <ClCompile Include="PeTools.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="PeTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
