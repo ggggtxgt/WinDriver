@@ -1,34 +1,59 @@
 #include <ntifs.h>
 
+typedef struct _LDR_DATA_TABLE_ENTRY {
+	LIST_ENTRY InLoadOrderLinks;
+	LIST_ENTRY InMemoryOrderLinks;
+	LIST_ENTRY InlnitializationOrderLinks;
+	PVOID DIIBase;
+	PVOID EntryPoint;
+	ULONG SizeOflmage;
+	UNICODE_STRING FullDIlName;
+	UNICODE_STRING BaseDllName;
+	ULONG Flags;
+	USHORT LoadCount;
+	USHORT TlsIndex;
+	union {
+		LIST_ENTRY HashLinks;
+		struct {
+			PVOID SectionPointer;
+			ULONG CheckSum;
+		};
+	};
+	union {
+		struct {
+			ULONG TimeDateStamp;
+		};
+		struct {
+			PVOID Loadedlmports;
+		};
+	};
+	struct _ACTIVATION_CONTEXT* EntryPointActivationContext; 
+	PVOID Patchlnformation;
+} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
+
 void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-ULONG FindEprocessByName(const char* processName) {
-	ULONG result = 0;
-	// 获取当前进程对象
-	ULONG currentProcess = PsGetCurrentProcess();
-	PLIST_ENTRY processList = (PLIST_ENTRY)(currentProcess + 0xb8);
-	PLIST_ENTRY nextList = processList->Flink;
-	// 遍历
-	while (processList != nextList) {
-		ULONG eprocess = (ULONG)nextList - 0xb8;
-		PUCHAR currentName = eprocess + 0x16c;
-		if (0 == strcmp(currentName, processName)) {
-			return eprocess;
+void Func(PDRIVER_OBJECT pDriver) {
+	PLDR_DATA_TABLE_ENTRY pLdr = (PLDR_DATA_TABLE_ENTRY)pDriver->DriverSection;
+	LIST_ENTRY list = pLdr->InLoadOrderLinks;
+	PLIST_ENTRY pFlink = list.Flink;
+	PLIST_ENTRY pBlink = pFlink->Blink;
+	UNICODE_STRING driverName = { 0 };
+	RtlInitUnicodeString(&driverName, L"Dbgv.sys");
+	while (pFlink != pBlink) {
+		DbgPrint("%Z", (ULONG)pFlink + 0x2c);
+		if (0 == RtlCompareUnicodeString(&driverName, (ULONG)pFlink + 0x2c, TRUE)) {
+			RemoveEntryList(pFlink);
+			break;
 		}
-		nextList = nextList->Flink;
+		pFlink = pFlink->Flink;
 	}
-	return result;
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	ULONG eprocess = FindEprocessByName("pack.exe");
-	if (eprocess) {
-		PLIST_ENTRY processList = (PLIST_ENTRY)(eprocess + 0xb8);
-		processList->Blink->Flink = processList->Flink;
-		processList->Flink->Blink = processList->Blink;
-	}
+	Func(pDriver);
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }
