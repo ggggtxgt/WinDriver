@@ -4,27 +4,31 @@ void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-void TraverseProcess() {
-	ULONG processName = 0;
+ULONG FindEprocessByName(const char* processName) {
+	ULONG result = 0;
 	// 获取当前进程对象
 	ULONG currentProcess = PsGetCurrentProcess();
 	PLIST_ENTRY processList = (PLIST_ENTRY)(currentProcess + 0xb8);
 	PLIST_ENTRY nextList = processList->Flink;
-	// 遍历链表
+	// 遍历
 	while (processList != nextList) {
-		ULONG eprocess = ((ULONG)nextList - 0xb8);
-		processName = eprocess + 0x16c;
-		if (0 == strcmp(processName, "123.exexe")) {
-			DbgPrint("已经找到!!!");
-			*(ULONG*)(eprocess + 0x26c) |= 0x800;
-			break;
+		ULONG eprocess = (ULONG)nextList - 0xb8;
+		PUCHAR currentName = eprocess + 0x16c;
+		if (0 == strcmp(currentName, processName)) {
+			return eprocess;
 		}
 		nextList = nextList->Flink;
 	}
+	return result;
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	TraverseProcess();
+	ULONG eprocess = FindEprocessByName("pack.exe");
+	if (eprocess) {
+		PLIST_ENTRY processList = (PLIST_ENTRY)(eprocess + 0xb8);
+		processList->Blink->Flink = processList->Flink;
+		processList->Flink->Blink = processList->Blink;
+	}
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }
