@@ -36,4 +36,5 @@
 - [‌﻿‬‍⁠⁠‌﻿‬‬⁠⁠‍‍‌﻿⁠⁠‍﻿‬⁠‌029KPCR -- 飞书云文档](https://my.feishu.cn/docx/R64JdOXgEoPtxzxzSsQcuu5Znxf)
 - [‬‬⁠‍‌‌‌‬‬‌﻿⁠‌‌⁠⁠‬⁠‌‌⁠‬‬‍‬‌﻿030线程切换 -- 飞书云文档](https://my.feishu.cn/docx/KbC2dpGAtocEa5xJ22kcgSICnNh)
 - [‌‬‍⁠‌⁠‬⁠﻿﻿‬‍‍‍⁠‬﻿‬﻿‍‌‍‌‌⁠‬﻿﻿‬031线程主动切换 -- 飞书云文档](https://my.feishu.cn/docx/APtOdV0WxofXV5xptgwcIJDunEx)
+- [‍‍⁠‌‌‬‍﻿‬‌‬‌‌‬⁠⁠‍﻿‬⁠⁠‍‌032线程被动切换 -- 飞书云文档](https://my.feishu.cn/docx/JC0xds69Nodj0ZxvS2ycy6YjnDH)
 ## DriverRW
