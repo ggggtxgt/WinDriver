@@ -1,39 +1,23 @@
 #include <ntifs.h>
 
-UCHAR* PsGetProcessImageFileName(__in PEPROCESS Process);
-
 void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-// 枚举进程
-void EnumProcess() {
+void Func() {
 	PEPROCESS pEprocess = NULL;
-	// 传入进程ID，将会返回对应的进程对象
-	for (SIZE_T i = 4; i < 20000; i += 4) {
-		NTSTATUS status = PsLookupProcessByProcessId((HANDLE)i, & pEprocess);
-		if (NT_SUCCESS(status)) {
-			DbgPrint("进程名称:%s", PsGetProcessImageFileName(pEprocess));
-		}
+	KAPC_STATE apcStatus = { 0 };
+	NTSTATUS status = PsLookupProcessByProcessId((HANDLE)2064, &pEprocess);
+	if (NT_SUCCESS(status)) {
+		PULONG pvalue = (PULONG)0x1b60000;
+		KeStackAttachProcess(pEprocess, &apcStatus);
+		DbgPrint("value: %d", pvalue);
 	}
-}
-
-// 枚举线程
-void EnumThread() {
-	PETHREAD pEthread = NULL;
-	PEPROCESS pEprocess = NULL;
-	for (SIZE_T i = 4; i < 200000; i += 4) {
-		NTSTATUS status = PsLookupThreadByThreadId((HANDLE)i, &pEthread);
-		if (NT_SUCCESS(status)) {
-			pEprocess = IoThreadToProcess(pEthread);
-			DbgPrint("进程名称:%s, 线程id:%d", PsGetProcessImageFileName(pEprocess), i);
-		}
-	}
+	KeUnstackDetachProcess(&apcStatus);
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	// EnumProcess();
-	EnumThread();
+	Func();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }
