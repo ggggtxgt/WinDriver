@@ -39,4 +39,5 @@
 - [‍‍⁠‌‌‬‍﻿‬‌‬‌‌‬⁠⁠‍﻿‬⁠⁠‍‌032线程被动切换 -- 飞书云文档](https://my.feishu.cn/docx/JC0xds69Nodj0ZxvS2ycy6YjnDH)
 - [‌⁠‬⁠‍‍‌‌﻿‍‌‍﻿﻿‍﻿‬‍⁠‬‬‌﻿﻿‬﻿‍‬‬‌⁠033进程挂靠 -- 飞书云文档](https://my.feishu.cn/docx/UMTcdMItvodEGsxU0Xgc9r8knQf)
 - [‌‬‬‌‌‬‍‍﻿‍⁠‬‌‍‌⁠‍‬﻿‍﻿⁠‍﻿034线程相关操作 -- 飞书云文档](https://my.feishu.cn/docx/IYRFdpk2ToHOtGx7qjzcsco3nxh)
+- [‍‬‬﻿﻿‬﻿‍‌‬⁠‍‬‬‍﻿⁠‌‌‍‍‬﻿‍‌﻿035全局句柄表 -- 飞书云文档](https://my.feishu.cn/docx/RU2Rd8B23owet3xjSkPcgf0Rnqd)
 ## DriverRW
