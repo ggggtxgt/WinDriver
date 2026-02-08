@@ -45,4 +45,5 @@
 - [‍‬‍‌⁠⁠‌﻿﻿‌‬‬﻿﻿﻿‌‌⁠‍⁠﻿‌‍‌‬‬‌﻿038句柄降权 -- 飞书云文档](https://my.feishu.cn/docx/JGExdcWFBozKydxfMvKcvVjWnrh)
 - [⁠⁠‍⁠‬‍⁠‍⁠﻿﻿⁠‍‬‬‌‌⁠‬⁠‌‍039突破句柄降权保护 -- 飞书云文档](https://my.feishu.cn/docx/Vqp0dlqLNoPjJ8xYP5xcITCenZt)
 - [‌﻿‬﻿‍‌⁠‌﻿⁠﻿﻿﻿‬‍‌‬⁠‌‬‌⁠‬‌⁠040修改CR3 -- 飞书云文档](https://my.feishu.cn/docx/SUHZdt3JfodBSyxXViicCFDLnZg)
+- [‍‍‬‬‬﻿‬﻿﻿‬‌﻿⁠‌‬﻿﻿‬‍041初识APC -- 飞书云文档](https://my.feishu.cn/docx/PMcodeYWZoosoux2AoVc0XYKnsb)
 ## DriverRW
