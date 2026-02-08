@@ -4,58 +4,54 @@ void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-// 获取全局句柄表地址
-ULONG GetPspCidTable() {
-	ULONG funcAddr = (ULONG)PsLookupProcessByProcessId;
-	return *(ULONG*)(funcAddr + 0x20);
+// 线程回调函数
+void ThreadProc(PVOID pEprocess) {
+	PVOID pTargetProcess = NULL;
+	LARGE_INTEGER time = RtlConvertLongToLargeInteger(-10000 * 3000);
+	for (SIZE_T i = 0; i < 50; i++) {
+		NTSTATUS status = PsLookupProcessByProcessId(i * 4, &pTargetProcess);
+		if (NT_SUCCESS(status)) {
+			// 遍历私有句柄表，之后匹配，降权
+			SetHandleAccess(pEprocess, pTargetProcess);
+		}
+		KeDelayExecutionThread(KernelMode, FALSE, &time);
+	}
 }
 
-// 通过全局句柄表遍历进程
-void EnumProcessByPspCidTable() {
-	ULONG psCidTable = GetPspCidTable();
-	if (!MmIsAddressValid(psCidTable)) {
+// 降权
+void SetHandleAccess(PVOID srcProcess, PVOID targetProcess) {
+	ULONG handleTable = *(ULONG*)((ULONG)targetProcess + 0xf4);
+	if (!MmIsAddressValid(handleTable)) {
 		return;
 	}
-	ULONG psCidTableAddr = *(ULONG*)psCidTable;
-	// 获取 TableCode
-	ULONG tableCode = *(ULONG*)psCidTableAddr;
-	// 判断目录层级
-	UCHAR tableLv = tableCode & 0xF;
-	// 获取表地址
-	ULONG tableAddr = tableCode & 0xFFFFF0;
-	switch (tableLv) {
-	case 0:
-		break;
-	case 1: {
-		for (SIZE_T i = 0; i < 1024; i++) {
-			ULONG subTable = *(ULONG*)(tableAddr + i * 4);
-			if (0 == subTable) break;
-			for (SIZE_T j = 0; j < 512; j++) {
-				ULONG subTable2 = *(ULONG*)(subTable + j * 8);
-				ULONG objAddr = subTable2 & 0xFFFFFF8;
-				if (!MmIsAddressValid(objAddr)) {
-					continue;
-				}
-				ULONG objHeader = objAddr - 0x18;
-				UCHAR typeIndex = *(CHAR*)(objHeader + 0xc);
-				if (7 == typeIndex) {
-					DbgPrint("其为一个进程!!!");
-					if (MmIsAddressValid(objAddr + 0x16c)) {
-						DbgPrint("%s", objAddr + 0x16c);
-					}
-				}
-			}
-		}
-		break;
+	ULONG tableCode = *(ULONG*)handleTable;
+	tableCode = tableCode & 0xfffffff0;
+	if (!MmIsAddressValid(tableCode)) {
+		return;
 	}
-	case 2:
-		break;
-	default:
-		break;
+	for (SIZE_T i = 0; i < 512; i++) {
+		ULONG objAddr = *(ULONG*)(tableCode + 8 * i);
+		objAddr = objAddr & 0xfffffff8;
+		if (!MmIsAddressValid(objAddr)) {
+			continue;
+		}
+		if (objAddr + 0x18 == srcProcess) {
+			// 降权
+		}
 	}
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
+	// 引用计数
+	PVOID pEprocess = NULL;
+	HANDLE hThread = 0;
+	// 查找保护的进程对象
+	NTSTATUS status = PsLookupProcessByProcessId(123, &pEprocess);
+	if (NT_SUCCESS(status)) {
+		PsCreateSystemThread(&hThread, NULL, NULL, NULL, NULL, ThreadProc, pEprocess);
+		ObReferenceObject(pEprocess);
+	}
+	if (hThread) ZwClose(hThread);
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }
