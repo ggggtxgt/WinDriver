@@ -4,22 +4,8 @@ void DriverUnload(PDRIVER_OBJECT pDriver) {
 	DbgPrint("DriverUnload!!!");
 }
 
-// 线程回调函数
-void ThreadProc(PVOID pEprocess) {
-	PVOID pTargetProcess = NULL;
-	LARGE_INTEGER time = RtlConvertLongToLargeInteger(-10000 * 3000);
-	for (SIZE_T i = 0; i < 50; i++) {
-		NTSTATUS status = PsLookupProcessByProcessId(i * 4, &pTargetProcess);
-		if (NT_SUCCESS(status)) {
-			// 遍历私有句柄表，之后匹配，降权
-			SetHandleAccess(pEprocess, pTargetProcess);
-		}
-		KeDelayExecutionThread(KernelMode, FALSE, &time);
-	}
-}
-
-// 降权
-void SetHandleAccess(PVOID srcProcess, PVOID targetProcess) {
+// 遍历私有句柄表，并且提权
+void SetHandleAccess(PVOID srcProcess, PVOID targetProcess, PVOID newGameProcess) {
 	ULONG handleTable = *(ULONG*)((ULONG)targetProcess + 0xf4);
 	if (!MmIsAddressValid(handleTable)) {
 		return;
@@ -36,22 +22,38 @@ void SetHandleAccess(PVOID srcProcess, PVOID targetProcess) {
 			continue;
 		}
 		if (objAddr + 0x18 == srcProcess) {
-			// 降权
+			// 提权
+			*(ULONG*)(tableCode + i * 8) = (ULONG)newGameProcess | 3;
+			ULONG mask = *(ULONG*)(tableCode + i * 8 + 4) | 0x0010 | 0x0020;
+			*(ULONG*)(tableCode + i * 8 + 4) = mask;
 		}
 	}
 }
 
+void MyFunc() {
+	PVOID pGameProcess = NULL;
+	PVOID pCeProcess = NULL;
+	PVOID newGameProcess = NULL;
+	// 找到游戏进程对象
+	NTSTATUS status = PsLookupProcessByProcessId(2812, &pGameProcess);
+	if (NT_SUCCESS(status)) return;
+	// 找到CE OD进行对象
+	status = PsLookupProcessByProcessId(3256, &pCeProcess);
+	if (NT_SUCCESS(status)) return;
+	// 申请内存
+	newGameProcess = ExAllocatePool(NonPagedPool, 0x300);
+	if (!newGameProcess) return;
+	// 复制游戏进程对象到新申请的内存
+	memset(newGameProcess, 0, 0x300);
+	memcpy(newGameProcess, (PVOID)((ULONG)pGameProcess - 0x18), 0x300);
+	// 遍历CE/OD进程私有句柄表
+	// 先将句柄值进行修改，让其指向新申请的内存
+	// 提权
+	SetHandleAccess(pGameProcess, pCeProcess, newGameProcess);
+}
+
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	// 引用计数
-	PVOID pEprocess = NULL;
-	HANDLE hThread = 0;
-	// 查找保护的进程对象
-	NTSTATUS status = PsLookupProcessByProcessId(123, &pEprocess);
-	if (NT_SUCCESS(status)) {
-		PsCreateSystemThread(&hThread, NULL, NULL, NULL, NULL, ThreadProc, pEprocess);
-		ObReferenceObject(pEprocess);
-	}
-	if (hThread) ZwClose(hThread);
+	MyFunc();
 	pDriver->DriverUnload = DriverUnload;
 	return STATUS_SUCCESS;
 }

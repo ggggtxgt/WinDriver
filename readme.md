@@ -43,4 +43,5 @@
 - [‍﻿‬‍⁠‍‬‍‌‬‌﻿‌‬﻿﻿‍﻿‬‍﻿⁠﻿﻿‬036私有句柄表 -- 飞书云文档](https://my.feishu.cn/docx/OjbtdCAzvozvJExWgoNcRLTLnRb)
 - [‌⁠‍﻿﻿‬‍‬⁠﻿﻿‍⁠‌⁠⁠﻿‍⁠‌‌037以全局句柄表遍历进程 -- 飞书云文档](https://my.feishu.cn/docx/Gz5cdXNQyoz03Qxc2JXcPVWzntb)
 - [‍‬‍‌⁠⁠‌﻿﻿‌‬‬﻿﻿﻿‌‌⁠‍⁠﻿‌‍‌‬‬‌﻿038句柄降权 -- 飞书云文档](https://my.feishu.cn/docx/JGExdcWFBozKydxfMvKcvVjWnrh)
+- [⁠⁠‍⁠‬‍⁠‍⁠﻿﻿⁠‍‬‬‌‌⁠‬⁠‌‍039突破句柄降权保护 -- 飞书云文档](https://my.feishu.cn/docx/Vqp0dlqLNoPjJ8xYP5xcITCenZt)
 ## DriverRW
