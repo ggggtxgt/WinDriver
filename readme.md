@@ -48,4 +48,5 @@
 - [‍‍‬‬‬﻿‬﻿﻿‬‌﻿⁠‌‬﻿﻿‬‍041初识APC -- 飞书云文档](https://my.feishu.cn/docx/PMcodeYWZoosoux2AoVc0XYKnsb)
 - [‌‍⁠‬‬‍‬﻿‌‍⁠⁠﻿‬‍﻿‌⁠‬‍⁠⁠‌‌‬⁠‍‌﻿042APC注入 -- 飞书云文档](https://my.feishu.cn/docx/UmvZd529Bo665uxkSECcEd3MnMg)
 - [‍‌‍‌‌﻿‬﻿⁠﻿‬⁠﻿⁠﻿‬﻿‬‍‬⁠043APC队列插入 -- 飞书云文档](https://my.feishu.cn/docx/LXmpdmjRjoxI6gx1ukScIFHhnzh)
+- [‍‍‌‍‌⁠⁠⁠﻿‌﻿﻿﻿‬⁠﻿‍‍‌﻿‍⁠‍‍‍‬﻿⁠⁠044内核APC插入操作 -- 飞书云文档](https://my.feishu.cn/docx/RBCfdFXzhot3lfxYmQ4cz21knhb)
 ## DriverRW
