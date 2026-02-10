@@ -28,8 +28,14 @@ void MyFunc() {
 		return;
 	}
 	memset(papc, 0, size);
-	KeInitializeApc(papc, PsGetCurrentThread(), OriginalApcEnvironment, MyKernelRouting, NULL, 
-					MyNormalRouting, KernelMode, NULL);
+	PETHREAD peThread = NULL;
+	NTSTATUS status = PsLookupThreadByThreadId(3076, &peThread);
+	if (!NT_SUCCESS(status)) {
+		DbgPrint("PsLookupThreadByThreadId´íÎó!!!");
+		ExFreePool(papc);
+		return;
+	}
+	KeInitializeApc(papc, peThread, OriginalApcEnvironment, MyKernelRouting, NULL, 0x450c10, KernelMode, NULL);
 	BOOLEAN result = KeInsertQueueApc(papc, NULL, NULL, 0);
 	if (FALSE == result) {
 		DbgPrint("APC²åÈëÊ§°Ü!!!");
@@ -40,7 +46,7 @@ void MyFunc() {
 }
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING pRegPath) {
-	MyFunc();
 	pDriver->DriverUnload = DriverUnload;
+	MyFunc();
 	return STATUS_SUCCESS;
 }
